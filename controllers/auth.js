@@ -1,7 +1,7 @@
-import User from '../model/User.js';
 import jwt from 'jsonwebtoken';
 import { getRedisClient } from '../config/redis.js';
 import { sendEmail } from '../utils/sendMail.js';
+import User from '../model/User.js';
 
 
 const signToken = (id) => jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '1h' });
