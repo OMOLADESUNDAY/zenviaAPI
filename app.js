@@ -43,8 +43,8 @@ app.use('/api/categories/',AuthRouter)
 app.use('/api/order/',AuthRouter)
 app.use('/api/payment/',AuthRouter)
 app.use('/api/admin/',AuthRouter)
-// 404 handler (optional)
-app.use('*', (req, res) => {
+// 404 handler (optional) 
+app.use('*', (req, res) => {  
   res.status(404).json({ message: "Route not found" });
 });
 app.use(errorHandler);
