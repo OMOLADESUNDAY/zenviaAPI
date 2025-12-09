@@ -2,54 +2,60 @@ import jwt from 'jsonwebtoken';
 import { getRedisClient } from '../config/redis.js';
 import { sendEmail } from '../utils/sendMail.js';
 import User from '../model/User.js';
-
+import { ApiError } from '../utils/errorHandler.js';
 
 const signToken = (id) => jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
 // REGISTER
-
-export const register = async (req, res) => {
+export const register = async (req, res, next) => {
   try {
-    const redis = await getRedisClient();
+    const redis = getRedisClient();
     const { email, password, name } = req.body;
 
-    // Create user
-    const user = await User.create({ email, password, name, role: 'user', isVerified: false });
+    // 1. Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      throw new ApiError('User with this email already exists', 409);
+    }
 
-    // Generate code
+    // 2. Create new user
+    const user = await User.create({ 
+      email, 
+      password, 
+      name, 
+      role: 'user', 
+      isVerified: false 
+    });
+
+    // 3. Generate verification code
     const verificationCode = Math.floor(100000 + Math.random() * 900000);
 
-    // Save to Redis
-    await redis.set(`verify:${user._id}`, verificationCode.toString(), { EX: 10 * 60 });
+    // 4. Store in Redis with 10-minute expiration
+    await redis.set(`verify:${user._id}`, verificationCode.toString(), { 
+      EX: 10 * 60 
+    });
 
-    // Send immediate response
+    // 5. Send verification email
+    await sendEmail({
+      to: user.email,
+      subject: 'Verify Your Account',
+      html: `
+        <p>Hi ${user.name},</p>
+        <p>Your verification code:</p>
+        <h2>${verificationCode}</h2>
+        <p>Expires in 10 minutes.</p>
+      `,
+    });
+
+    // 6. Return success response
     res.status(201).json({ 
       message: 'Verification code sent', 
       userId: user._id 
     });
 
-    // Send email in background
-    setTimeout(async () => {
-      try {
-        await sendEmail({
-          to: user.email,
-          subject: 'Verify Your Account',
-          html: `
-            <h2>Your verification code:</h2>
-            <h1 style="background: #f0f0f0; padding: 20px; text-align: center;">
-              ${verificationCode}
-            </h1>
-            <p>Enter this code to verify your account.</p>
-          `
-        });
-      } catch (e) {
-        console.log('Email background error:', e.message);
-      }
-    }, 0);
-
   } catch (error) {
-    console.error('Register error:', error);
-    res.status(500).json({ message: 'Registration failed' });
+    // Pass to your error handling middleware
+    next(error);
   }
 };
 
