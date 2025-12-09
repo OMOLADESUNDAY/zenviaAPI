@@ -7,31 +7,51 @@ import User from '../model/User.js';
 const signToken = (id) => jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
 // REGISTER
+
 export const register = async (req, res) => {
-  const redis = getRedisClient();  // FIX
+  try {
+    const redis = await getRedisClient();
+    const { email, password, name } = req.body;
 
-  const { email, password, name } = req.body;
+    // Create user
+    const user = await User.create({ email, password, name, role: 'user', isVerified: false });
 
-  const user = await User.create({ email, password, name, role: 'user', isVerified: false });
+    // Generate code
+    const verificationCode = Math.floor(100000 + Math.random() * 900000);
 
-  const verificationCode = Math.floor(100000 + Math.random() * 900000);
+    // Save to Redis
+    await redis.set(`verify:${user._id}`, verificationCode.toString(), { EX: 10 * 60 });
 
-  await redis.set(`verify:${user._id}`, verificationCode.toString(), { EX: 10 * 60 });
+    // Send immediate response
+    res.status(201).json({ 
+      message: 'Verification code sent', 
+      userId: user._id 
+    });
 
-  await sendEmail({
-    to: user.email,
-    subject: 'Verify Your Account',
-    html: `
-      <p>Hi ${user.name},</p>
-      <p>Your verification code:</p>
-      <h2>${verificationCode}</h2>
-      <p>Expires in 10 minutes.</p>
-    `,
-  });
+    // Send email in background
+    setTimeout(async () => {
+      try {
+        await sendEmail({
+          to: user.email,
+          subject: 'Verify Your Account',
+          html: `
+            <h2>Your verification code:</h2>
+            <h1 style="background: #f0f0f0; padding: 20px; text-align: center;">
+              ${verificationCode}
+            </h1>
+            <p>Enter this code to verify your account.</p>
+          `
+        });
+      } catch (e) {
+        console.log('Email background error:', e.message);
+      }
+    }, 0);
 
-  res.status(201).json({ message: 'Verification code sent', userId: user._id });
+  } catch (error) {
+    console.error('Register error:', error);
+    res.status(500).json({ message: 'Registration failed' });
+  }
 };
-
 
   // Verify account using code from email
 export const verifyAccount = async (req, res) => {
