@@ -1,6 +1,5 @@
 import express from 'express'
 const router=express.Router()
-router.get('/product/:id',getSingleProduct)
-router.get('/product',getAllProduct)
-router.post('/product',addProduct)
+router.get('/:id',getSingleProduct)
+router.get('/',getAllProduct)
 export default router

@@ -21,3 +21,10 @@ export const getProducts = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+export const getSingleProduct= async(req,res)=>{
+  const userId=req.body.params;
+  
+
+
+}

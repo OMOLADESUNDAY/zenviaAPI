@@ -14,6 +14,7 @@ import AuthRouter from './Routes/auth.js';
 import OAuthRouter from './Routes/oauth.js';
 import { errorHandler } from "./utils/errorHandler.js";
 import passport from './controllers/oauth.js';
+import productRouter from './Routes/product.js'
 const app = express();
 
 // MIDDLEWARE
@@ -49,7 +50,7 @@ app.get('/health', (req, res) => res.json({ status: 'ok', timestamp: Date.now() 
 // Auth routes
 app.use('/api/auth', AuthRouter); // email/password login & registration
 app.use('/api/auth', OAuthRouter); // OAuth login routes
-
+app.use('/api/product',productRouter)
 // You can add other routers like product, categories, orders, payment, admin
 // Example: app.use('/api/product', ProductRouter);
 
