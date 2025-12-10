@@ -119,18 +119,19 @@ export const forgotPassword = async (req, res) => {
   const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${req.resetToken}`;
 
   try {
-    await sendEmail({
-      to: req.user.email,
-      subject: 'Password Reset',
-      text: `Click this link to reset your password: ${resetUrl} (expires in 10 minutes)`,
-    });
+    // Email sending removed
 
-    res.json({ message: 'Password reset email sent.' });
+    // For development/testing, you can still return the reset URL if needed
+    res.json({ 
+      message: 'Password reset process initiated (email sending skipped).',
+      resetUrl // optional, remove in production
+    });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: 'Failed to send password reset email.' });
+    res.status(500).json({ message: 'Failed to initiate password reset.' });
   }
 };
+
 
 // Reset password
 export const resetPassword = async (req, res) => {
