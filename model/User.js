@@ -26,7 +26,6 @@ const userSchema = new mongoose.Schema(
 
     password: {
       type: String,
-      required: [true, "Password is required"],
       minlength: 6,
       select: false,
     },
@@ -46,7 +45,8 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-
+    oauthId: { type: String }, 
+    provider: { type: String },
     resetPasswordToken: String,
     resetPasswordExpires: Date,
   },
