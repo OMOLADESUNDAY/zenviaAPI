@@ -13,8 +13,7 @@ import { body } from 'express-validator';
 import AuthRouter from './Routes/auth.js';
 import OAuthRouter from './Routes/oauth.js';
 import { errorHandler } from "./utils/errorHandler.js";
-import passport from './controller/oauth.js';
-
+import passport from './controllers/oauth.js';
 const app = express();
 
 // MIDDLEWARE
