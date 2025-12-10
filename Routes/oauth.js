@@ -1,5 +1,5 @@
 import express from "express";
-import passport from "../controller/oauth.js";
+import passport from "../controllers/oauth.js";
 import jwt from "jsonwebtoken";
 
 const router = express.Router();
