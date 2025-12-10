@@ -10,27 +10,36 @@ const signToken = (id) => jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: 
 export const register = async (req, res, next) => {
   try {
     const redis = getRedisClient();
-    const { password, name } = req.body; // removed email
+    const { email, password, name } = req.body;
 
-    // 1. Create new user
+    // 1. Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      throw new ApiError("User with this email already exists", 409);
+    }
+
+    // 2. Create new user
     const user = await User.create({
+      email,
       password, // make sure you hash this in the model
       name,
       role: "user",
       isVerified: false,
     });
 
-    // 2. Generate verification code
+    // 3. Generate verification code
     const verificationCode = Math.floor(100000 + Math.random() * 900000);
 
-    // 3. Store in Redis (10 min expiration)
+    // 4. Store in Redis (10 min expiration)
     await redis.set(`verify:${user._id}`, verificationCode.toString(), {
       EX: 10 * 60,
     });
 
-    // 4. Return success response
+    // Email sending removed
+
+    // 5. Return success response
     res.status(201).json({
-      message: "Verification code generated (DEV ONLY)",
+      message: "User registered successfully (email sending skipped)",
       userId: user._id,
       verificationCode, // optional for dev testing
     });
@@ -38,6 +47,7 @@ export const register = async (req, res, next) => {
     next(error);
   }
 };
+
 
 
   // Verify account using code from email
