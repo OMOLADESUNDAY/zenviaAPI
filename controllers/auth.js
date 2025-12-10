@@ -15,46 +15,46 @@ export const register = async (req, res, next) => {
     // 1. Check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      throw new ApiError('User with this email already exists', 409);
+      throw new ApiError("User with this email already exists", 409);
     }
 
     // 2. Create new user
-    const user = await User.create({ 
-      email, 
-      password, 
-      name, 
-      role: 'user', 
-      isVerified: false 
+    const user = await User.create({
+      email,
+      password, // make sure you hash this in the model
+      name,
+      role: "user",
+      isVerified: false,
     });
 
     // 3. Generate verification code
     const verificationCode = Math.floor(100000 + Math.random() * 900000);
 
-    // 4. Store in Redis with 10-minute expiration
-    await redis.set(`verify:${user._id}`, verificationCode.toString(), { 
-      EX: 10 * 60 
+    // 4. Store in Redis (10 min expiration)
+    await redis.set(`verify:${user._id}`, verificationCode.toString(), {
+      EX: 10 * 60,
     });
 
-    // 5. Send verification email
-    await sendEmail({
-      to: user.email,
-      subject: 'Verify Your Account',
+    // 5. Send email via Ethereal
+    const previewUrl = await sendEmail({
+      to: email,
+      subject: "Verify Your Account",
       html: `
-        <p>Hi ${user.name},</p>
+        <p>Hi ${name},</p>
         <p>Your verification code:</p>
         <h2>${verificationCode}</h2>
         <p>Expires in 10 minutes.</p>
       `,
     });
 
-    // 6. Return success response
-    res.status(201).json({ 
-      message: 'Verification code sent', 
-      userId: user._id 
+    // 6. Return success response including the preview URL
+    res.status(201).json({
+      message: "Verification code sent (DEV ONLY)",
+      userId: user._id,
+      verificationCode, // optional for dev testing
+      emailPreviewUrl: previewUrl, // Ethereal preview URL
     });
-
   } catch (error) {
-    // Pass to your error handling middleware
     next(error);
   }
 };
