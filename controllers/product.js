@@ -1,4 +1,4 @@
-import Product from "../models/Product.js";
+import Product from "../model/Product.js";
 import APIFeatures from "../utils/apiFeatures.js";
 
 export const getProducts = async (req, res) => {
@@ -24,7 +24,7 @@ export const getProducts = async (req, res) => {
 
 export const getSingleProduct= async(req,res)=>{
   const userId=req.body.params;
-  
+
 
 
 }
