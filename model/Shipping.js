@@ -1,0 +1,60 @@
+import mongoose from "mongoose";
+
+const shippingSchema = new mongoose.Schema(
+  {
+    order: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Order",
+      required: true,
+      unique: true, // One shipping entry per order
+    },
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    shippingAddress: {
+      fullName: { type: String, required: true },
+      addressLine1: { type: String, required: true },
+      addressLine2: { type: String },
+      city: { type: String, required: true },
+      state: { type: String },
+      postalCode: { type: String, required: true },
+      country: { type: String, required: true },
+      phone: { type: String, required: true },
+    },
+    shippingMethod: {
+      type: String,
+      enum: ["standard", "express", "overnight"],
+      default: "standard",
+    },
+    shippingCost: {
+      type: Number,
+      default: 0,
+    },
+    trackingNumber: {
+      type: String,
+      default: null,
+    },
+    status: {
+      type: String,
+      enum: ["pending", "shipped", "in-transit", "delivered", "cancelled"],
+      default: "pending",
+    },
+    estimatedDelivery: {
+      type: Date,
+    },
+    shippedAt: {
+      type: Date,
+    },
+    deliveredAt: {
+      type: Date,
+    },
+  },
+  { timestamps: true } // adds createdAt and updatedAt
+);
+
+const Shipping = mongoose.model("Shipping", shippingSchema);
+
+export default Shipping;
+
