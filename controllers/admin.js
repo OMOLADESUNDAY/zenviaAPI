@@ -10,6 +10,7 @@ import Coupon from "../model/Coupon.js";
 import APIFeatures from "../utils/apiFeatures.js";
 import { connectRedis } from "../config/redis.js";
 import { ApiError } from "../utils/errorHandler.js";
+import ShippingMethods from "../model/ShippingMethods.js";
 
 // Helper to create JWT
 const generateToken = (adminId) => {
@@ -227,51 +228,62 @@ export const refundPayment = async (req, res) => {
 
 // ================== SHIPPING ==================
 
-export const createShipping = async (req, res) => {
-  const shipping = await Shipping.create(req.body);
-  res.status(201).json({ success: true, data: shipping });
+// Create a new shipping method
+export const createShippingMethod = async (req, res) => {
+  const shippingMethod = await ShippingMethods.create(req.body);
+  res.status(201).json({ success: true, data: shippingMethod });
 };
 
-export const getAllShipping = async (req, res) => {
-  const shippingOptions = await Shipping.find();
-  res.json({ success: true, data: shippingOptions });
+// Get all shipping methods
+export const getAllShippingMethods = async (req, res) => {
+  const methods = await ShippingMethods.find();
+  res.json({ success: true, data: methods });
 };
 
-export const updateShipping = async (req, res) => {
-  const shipping = await Shipping.findByIdAndUpdate(req.params.id, req.body, { new: true });
-  if (!shipping) throw new ApiError("Shipping not found", 404);
-  res.json({ success: true, data: shipping });
+// Update a shipping method
+export const updateShippingMethod = async (req, res) => {
+  const method = await ShippingMethods.findByIdAndUpdate(
+    req.params.id,
+    req.body,
+    { new: true }
+  );
+
+  if (!method) throw new ApiError("Shipping method not found", 404);
+
+  res.json({ success: true, data: method });
 };
 
-export const deleteShipping = async (req, res) => {
-  const shipping = await Shipping.findByIdAndDelete(req.params.id);
-  if (!shipping) throw new ApiError("Shipping not found", 404);
-  res.json({ success: true, message: "Shipping deleted successfully" });
-};
+// Delete a shipping method
+export const deleteShippingMethod = async (req, res) => {
+  const method = await ShippingMethods.findByIdAndDelete(req.params.id);
 
+  if (!method) throw new ApiError("Shipping method not found", 404);
+
+  res.json({ success: true, message: "Shipping method deleted successfully" });
+};
 // ================== COUPONS ==================
 
-export const createCoupon = async (req, res) => {
-  const coupon = await Coupon.create(req.body);
-  res.status(201).json({ success: true, data: coupon });
-};
+// export const createCoupon = async (req, res) => {
+//   const coupon = await Coupon.create(req.body);
+//   res.status(201).json({ success: true, data: coupon });
+// };
 
-export const getAllCoupons = async (req, res) => {
-  const coupons = await Coupon.find();
-  res.json({ success: true, data: coupons });
-};
+// export const getAllCoupons = async (req, res) => {
+//   const coupons = await Coupon.find();
+//   res.json({ success: true, data: coupons });
+// };
 
-export const updateCoupon = async (req, res) => {
-  const coupon = await Coupon.findByIdAndUpdate(req.params.id, req.body, { new: true });
-  if (!coupon) throw new ApiError("Coupon not found", 404);
-  res.json({ success: true, data: coupon });
-};
+// export const updateCoupon = async (req, res) => {
+//   const coupon = await Coupon.findByIdAndUpdate(req.params.id, req.body, { new: true });
+//   if (!coupon) throw new ApiError("Coupon not found", 404);
+//   res.json({ success: true, data: coupon });
+// };
 
-export const deleteCoupon = async (req, res) => {
-  const coupon = await Coupon.findByIdAndDelete(req.params.id);
-  if (!coupon) throw new ApiError("Coupon not found", 404);
-  res.json({ success: true, message: "Coupon deleted successfully" });
-};
+// export const deleteCoupon = async (req, res) => {
+//   const coupon = await Coupon.findByIdAndDelete(req.params.id);
+//   if (!coupon) throw new ApiError("Coupon not found", 404);
+//   res.json({ success: true, message: "Coupon deleted successfully" });
+// };
 
 // ================== REPORTS ==================
 
@@ -297,53 +309,52 @@ export const getUserReport = async (req, res) => {
   const bannedUsers = await User.countDocuments({ banned: true });
   res.json({ success: true, data: { totalUsers, bannedUsers } });
 };
-export const adminLogin = async (req, res) => {
-  const { email, password } = req.body;
-  if (!email || !password) throw new ApiError("Email and password required", 400);
+// ================== CREATE ADMIN ==================
+export const createAdmin = async (req, res) => {
+  const { name, email, password } = req.body;
 
-  const admin = await Admin.findOne({ email });
-  if (!admin) throw new ApiError("Invalid credentials", 401);
+  if (!name || !email || !password)
+    throw new ApiError("Name, email, and password are required", 400);
 
-  const isMatch = await admin.comparePassword(password);
-  if (!isMatch) throw new ApiError("Invalid credentials", 401);
+  const existing = await User.findOne({ email });
+  if (existing) throw new ApiError("Email already in use", 400);
 
-  const token = generateToken(admin._id);
+  const newAdmin = await User.create({
+    name,
+    email,
+    password,   // hashed automatically via User model
+    role: "admin" // force role to admin
+  });
+
+  res.status(201).json({
+    success: true,
+    message: "Admin created successfully",
+    data: { id: newAdmin._id, name: newAdmin.name, email: newAdmin.email }
+  });
+};
+
+// ================== DELETE ADMIN ==================
+export const deleteAdmin = async (req, res) => {
+  const admin = await User.findOne({ _id: req.params.id, role: "admin" });
+
+  if (!admin) throw new ApiError("Admin not found", 404);
+
+  await User.findByIdAndDelete(admin._id);
 
   res.json({
     success: true,
-    token,
-    admin: { id: admin._id, name: admin.name, email: admin.email },
+    message: "Admin deleted successfully"
   });
 };
-// ================== LOGOUT ==================
-export const adminLogout = async (req, res) => {
-  // Frontend should just delete the JWT token
-  res.json({ success: true, message: "Admin logged out successfully" });
+// ================== GET ALL ADMINS ==================
+export const getAllAdmins = async (req, res) => {
+  const admins = await User.find({ role: "admin" }).select("-password"); // exclude password
+  res.json({
+    success: true,
+    data: admins
+  });
 };
 
-// ================== PROFILE ==================
-export const getAdminProfile = async (req, res) => {
-  const admin = await Admin.findById(req.admin.id).select("-password");
-  if (!admin) throw new ApiError("Admin not found", 404);
-
-  res.json({ success: true, data: admin });
-};
-// ================== UPDATE PASSWORD ==================
-export const updateAdminPassword = async (req, res) => {
-  const { currentPassword, newPassword } = req.body;
-  if (!currentPassword || !newPassword) throw new ApiError("Both passwords are required", 400);
-
-  const admin = await Admin.findById(req.admin.id);
-  if (!admin) throw new ApiError("Admin not found", 404);
-
-  const isMatch = await admin.comparePassword(currentPassword);
-  if (!isMatch) throw new ApiError("Current password is incorrect", 401);
-
-  admin.password = newPassword;
-  await admin.save();
-
-  res.json({ success: true, message: "Password updated successfully" });
-};
 export const updateProductStock = async (req, res) => {
   const { stock } = req.body;
   const product = await Product.findByIdAndUpdate(

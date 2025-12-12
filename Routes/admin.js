@@ -33,10 +33,10 @@ import {
   refundPayment,
 
   // Shipping controllers
-  createShipping,
-  getAllShipping,
-  updateShipping,
-  deleteShipping,
+  createShippingMethod,
+  getAllShippingMethods,
+  updateShippingMethod,
+  deleteShippingMethod,
 
   // Coupon controllers
   createCoupon,
@@ -50,20 +50,18 @@ import {
   getUserReport,
 
   // Admin auth controllers
-  adminLogin,
-  adminLogout,
-  getAdminProfile,
-  updateAdminPassword,
+  createAdmin,
+  deleteAdmin,
+  getAllAdmins,
 } from "../controllers/admin.js";
 
 import { adminProtect } from "../auth/auth.js";
 const router = express.Router();
 
 // ------------------ AUTH ------------------
-router.post("/auth/login", adminLogin);
-router.post("/auth/logout", adminProtect, adminLogout);
-router.get("/auth/profile", adminProtect, getAdminProfile);
-router.patch("/auth/password", adminProtect, updateAdminPassword);
+router.post("admin-account/create", adminProtect,createAdmin);
+router.delete("/admin-account/delete", adminProtect, deleteAdmin);
+router.get("/admin-all",adminProtect,getAllAdmins)
 
 // ------------------ PRODUCTS ------------------
 router.post("/product", adminProtect, createProduct);
@@ -98,16 +96,16 @@ router.get("/payments/:id", adminProtect, getPayment);
 router.patch("/payments/:id/refund", adminProtect, refundPayment);
 
 // ------------------ SHIPPING ------------------
-router.post("/shipping", adminProtect, createShipping);
-router.get("/shipping", adminProtect, getAllShipping);
-router.put("/shipping/:id", adminProtect, updateShipping);
-router.delete("/shipping/:id", adminProtect, deleteShipping);
+router.post("/shipping-method", adminProtect, createShippingMethod);
+router.get("/shipping-method", adminProtect, getAllShippingMethods);
+router.put("/shipping-method/:id", adminProtect, updateShippingMethod);
+router.delete("/shipping-method/:id", adminProtect, deleteShippingMethod);
 
 // ------------------ COUPONS ------------------
-router.post("/coupons", adminProtect, createCoupon);
-router.get("/coupons", adminProtect, getAllCoupons);
-router.put("/coupons/:id", adminProtect, updateCoupon);
-router.delete("/coupons/:id", adminProtect, deleteCoupon);
+// router.post("/coupons", adminProtect, createCoupon);
+// router.get("/coupons", adminProtect, getAllCoupons);
+// router.put("/coupons/:id", adminProtect, updateCoupon);
+// router.delete("/coupons/:id", adminProtect, deleteCoupon);
 
 // ------------------ REPORTS ------------------
 router.get("/reports/sales", adminProtect, getSalesReport);
