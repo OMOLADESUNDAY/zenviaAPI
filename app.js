@@ -19,6 +19,7 @@ import OrderRouter from "./Routes/order.js"
 import CartRoute from './Routes/cart.js'
 import CategoriesRoute from "./Routes/categories.js"
 import AdminRoute from "./Routes/admin.js"
+import PaymentRoute from "./Routes/payment.js"
 const app = express();
 
 // MIDDLEWARE
@@ -41,7 +42,7 @@ app.use(session({
 }));
 
 // Body validation
-app.use(body('*').escape());
+// app.use(body('*').escape());
 
 // Passport init
 app.use(passport.initialize());
@@ -59,7 +60,7 @@ app.use('/api/order',OrderRouter)
 app.use('/api/admin',AdminRoute)
 app.use('/api/cart',CartRoute)
 app.use('/api/categories',CategoriesRoute)
-// app.use('/api/payment',)
+app.use('/api/payment',PaymentRoute)
 app.use('*', (req, res) => res.status(404).json({ message: "Route not found" }));
 app.use(errorHandler);
 

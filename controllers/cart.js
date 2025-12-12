@@ -16,38 +16,47 @@ export const getAllCart = async (req, res) => {
 };
 
 export const addToCart = async (req, res) => {
-  const { productId, quantity } = req.body;
+  const { products } = req.body;
 
-  if (!productId || !quantity || quantity < 1) {
-    throw new ApiError('Product ID and valid quantity are required.', 400);
+  if (!products || !Array.isArray(products) || products.length === 0) {
+    throw new ApiError('Products array is required and cannot be empty.', 400);
   }
 
+  // Validate each product
+  for (const p of products) {
+    if (!p.productId || !p.quantity || p.quantity < 1) {
+      throw new ApiError('Each product must have a valid productId and quantity >= 1.', 400);
+    }
+  }
+
+  // Find user's cart
   let cart = await Cart.findOne({ user: req.user._id });
 
   if (!cart) {
-    // Create new cart for user
+    // Create new cart with all products
+    const cartProducts = products.map(p => ({ product: p.productId, quantity: p.quantity }));
     cart = await Cart.create({
       user: req.user._id,
-      products: [{ product: productId, quantity }],
+      products: cartProducts,
     });
   } else {
-    // Check if product already exists in cart
-    const existingProduct = cart.products.find(p => p.product.toString() === productId);
-
-    if (existingProduct) {
-      existingProduct.quantity += quantity; // Increase quantity
-    } else {
-      cart.products.push({ product: productId, quantity });
+    // Update existing cart
+    for (const p of products) {
+      const existingProduct = cart.products.find(cp => cp.product.toString() === p.productId);
+      if (existingProduct) {
+        existingProduct.quantity += p.quantity; // Increment quantity
+      } else {
+        cart.products.push({ product: p.productId, quantity: p.quantity });
+      }
     }
-
     await cart.save();
   }
 
+  // Populate product details
   const updatedCart = await Cart.findById(cart._id).populate('products.product');
 
   res.status(200).json({ success: true, data: updatedCart });
 };
-
 
 export const updateCartProduct = async (req, res) => {
   const { productId, quantity } = req.body;

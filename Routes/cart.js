@@ -1,7 +1,6 @@
 import express from "express";
 import {
   getCart,
-  getAllCart,
   addToCart,
   updateCartProduct,
   removeFromCart,
@@ -30,6 +29,6 @@ router.delete("/", protect, clearCart);
 
 // ---------------- ADMIN CART ----------------
 // Get all carts (admin only)
-router.get("/all", protect, getAllCart); // you can protect this with adminProtect if needed
+ // you can protect this with adminProtect if needed
 
 export default router;

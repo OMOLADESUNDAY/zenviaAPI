@@ -1,4 +1,3 @@
-// paymentController.js
 import Payment from "../model/Payment.js";
 import { ApiError } from "../utils/errorHandler.js";
 import Stripe from "stripe";
@@ -7,26 +6,27 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 // ================= CREATE PAYMENT (USER) =================
 export const createPayment = async (req, res) => {
-  const { orderId, amount, paymentMethod } = req.body;
+   console.log("user id"+req)
+  const { orderId, amount } = req.body;
 
-  if (!orderId || !amount || !paymentMethod) {
+  if (!orderId || !amount) {
     throw new ApiError("All fields are required", 400);
   }
 
-  // Create Stripe PaymentIntent
+  // TODO: Validate order amount from DB to prevent tampering
+ 
   const paymentIntent = await stripe.paymentIntents.create({
     amount: Math.round(amount * 100), // amount in cents
     currency: "usd",
-    payment_method_types: [paymentMethod], // e.g., "card"
+    payment_method_types: ["card"], // only allow card for security
     metadata: { orderId, userId: req.user._id.toString() },
   });
 
-  // Save payment in DB with pending status
   const payment = await Payment.create({
     user: req.user._id,
     order: orderId,
     amount,
-    paymentMethod,
+    paymentMethod: "card",
     transactionId: paymentIntent.id,
     status: "pending",
   });
@@ -38,80 +38,46 @@ export const createPayment = async (req, res) => {
   });
 };
 
-// ================= CONFIRM PAYMENT (USER) =================
-export const confirmPayment = async (req, res) => {
-  const { paymentId } = req.body;
+// ================= STRIPE WEBHOOK =================
+export const stripeWebhook = async (req, res) => {
+  const sig = req.headers["stripe-signature"];
+  let event;
 
-  const payment = await Payment.findById(paymentId);
-  if (!payment) throw new ApiError("Payment not found", 404);
-
-  const intent = await stripe.paymentIntents.retrieve(payment.transactionId);
-
-  if (intent.status === "succeeded") {
-    payment.status = "completed";
-    await payment.save();
+  try {
+    event = stripe.webhooks.constructEvent(
+      req.body,
+      sig,
+      process.env.STRIPE_WEBHOOK_SECRET
+    );
+  } catch (err) {
+    console.log("Webhook signature verification failed:", err.message);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
-  res.json({ success: true, data: payment });
-};
+  const data = event.data.object;
 
-// ================= GET ALL PAYMENTS (ADMIN) =================
-export const getAllPayments = async (req, res) => {
-  const page = Number(req.query.page) || 1;
-  const limit = Number(req.query.limit) || 20;
-  const skip = (page - 1) * limit;
+  switch (event.type) {
+    case "payment_intent.succeeded":
+      // Payment succeeded
+      const payment = await Payment.findOne({ transactionId: data.id });
+      if (payment) {
+        payment.status = "completed";
+        await payment.save();
+      }
+      break;
 
-  const filter = {};
+    case "payment_intent.payment_failed":
+      const failedPayment = await Payment.findOne({ transactionId: data.id });
+      if (failedPayment) {
+        failedPayment.status = "failed";
+        await failedPayment.save();
+      }
+      break;
 
-  // Optional filters
-  if (req.query.user) filter.user = req.query.user;
-  if (req.query.status) filter.status = req.query.status;
-  if (req.query.paymentMethod) filter.paymentMethod = req.query.paymentMethod;
-
-  const total = await Payment.countDocuments(filter);
-
-  const payments = await Payment.find(filter)
-    .populate("user", "name email")
-    .populate("order")
-    .sort({ createdAt: -1 })
-    .skip(skip)
-    .limit(limit);
-
-  res.json({
-    success: true,
-    total,
-    page,
-    pages: Math.ceil(total / limit),
-    data: payments,
-  });
-};
-
-// ================= GET SINGLE PAYMENT =================
-export const getPayment = async (req, res) => {
-  const payment = await Payment.findById(req.params.id)
-    .populate("user", "name email")
-    .populate("order");
-
-  if (!payment) throw new ApiError("Payment not found", 404);
-
-  res.json({ success: true, data: payment });
-};
-
-// ================= REFUND PAYMENT (ADMIN) =================
-export const refundPayment = async (req, res) => {
-  const payment = await Payment.findById(req.params.id);
-  if (!payment) throw new ApiError("Payment not found", 404);
-
-  if (payment.refunded) throw new ApiError("Payment has already been refunded", 400);
-
-  // Optionally, refund via Stripe
-  if (payment.transactionId) {
-    await stripe.refunds.create({ payment_intent: payment.transactionId });
+    default:
+      console.log(`Unhandled event type: ${event.type}`);
   }
 
-  payment.refunded = true;
-  payment.status = "failed"; // mark as refunded
-  await payment.save();
-
-  res.json({ success: true, message: "Payment refunded successfully", data: payment });
+  res.json({ received: true });
 };
+

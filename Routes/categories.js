@@ -7,5 +7,5 @@ const router = express.Router();
 router.get("/", getCategories);               // GET /api/categories
 router.get("/:id", getCategory);             // GET /api/categories/:id
 router.get("/slug/:slug", getCategoryBySlug); // GET /api/categories/slug/:slug
-
+  
 export default router;

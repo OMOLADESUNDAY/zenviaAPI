@@ -50,6 +50,7 @@ import {
 } from "../controllers/admin.js";
 
 import { adminProtect } from "../auth/auth.js";
+import { getAllCart } from "../controllers/cart.js";
 const router = express.Router();
 
 // ------------------ AUTH ------------------
@@ -105,5 +106,10 @@ router.delete("/shipping-method/:id", adminProtect, deleteShippingMethod);
 router.get("/reports/sales", adminProtect, getSalesReport);
 router.get("/reports/revenue", adminProtect, getRevenueReport);
 router.get("/reports/users", adminProtect, getUserReport);
+
+
+
+// Get all cart
+router.get("/get-all-cart", adminProtect, getAllCart);
 
 export default router;

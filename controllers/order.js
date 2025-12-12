@@ -1,8 +1,9 @@
 import Order from '../model/Order.js';
 import { ApiError } from '../utils/errorHandler.js';
+
+
 export const makeOrder = async (req, res) => {
   const { products, shippingAddress, paymentMethod, itemsPrice, taxPrice, shippingPrice, totalPrice } = req.body;
-
   if (!products || products.length === 0) {
     throw new ApiError('No products in the order.', 400);
   }
@@ -18,7 +19,7 @@ export const makeOrder = async (req, res) => {
     paymentMethod,
     itemsPrice,
     taxPrice,
-    shippingPrice,
+    shippingPrice,  
     totalPrice,
   });
 

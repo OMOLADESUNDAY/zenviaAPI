@@ -2,33 +2,18 @@
 import express from "express";
 import {
   createPayment,
-  confirmPayment,
-  getAllPayments,
-  getPayment,
-  refundPayment
+  stripeWebhook
 } from "../controllers/payment.js";
 
-import { protect, adminProtect } from "../auth/auth.js";
+import { protect } from "../auth/auth.js";
 
 const router = express.Router();
 
-// ---------------- USER ROUTES ----------------
-
 // User creates a new payment (Stripe)
-router.post("/", protect, createPayment);
+router.post("/create", protect, createPayment);
 
 // User confirms payment after Stripe frontend
-router.post("/confirm", protect, confirmPayment);
+router.post("/webhook", protect, stripeWebhook);
 
-// ---------------- ADMIN ROUTES ----------------
-
-// Get all payments with pagination & filters
-router.get("/", adminProtect, getAllPayments);
-
-// Get single payment by ID
-router.get("/:id", adminProtect, getPayment);
-
-// Refund a payment
-router.patch("/:id/refund", adminProtect, refundPayment);
 
 export default router;
