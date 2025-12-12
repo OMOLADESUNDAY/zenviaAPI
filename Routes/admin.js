@@ -38,12 +38,6 @@ import {
   updateShippingMethod,
   deleteShippingMethod,
 
-  // Coupon controllers
-  createCoupon,
-  getAllCoupons,
-  updateCoupon,
-  deleteCoupon,
-
   // Reports controllers
   getSalesReport,
   getRevenueReport,
@@ -59,7 +53,7 @@ import { adminProtect } from "../auth/auth.js";
 const router = express.Router();
 
 // ------------------ AUTH ------------------
-router.post("admin-account/create", adminProtect,createAdmin);
+router.post("/admin-account/create",createAdmin);
 router.delete("/admin-account/delete", adminProtect, deleteAdmin);
 router.get("/admin-all",adminProtect,getAllAdmins)
 

@@ -4,7 +4,7 @@ import { sendEmail } from '../utils/sendMail.js';
 import User from '../model/User.js';
 import { ApiError } from '../utils/errorHandler.js';
 
-const signToken = (id) => jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+const signToken = (id) => jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '30d' });
 
 // REGISTER
 export const register = async (req, res, next) => {
@@ -75,14 +75,34 @@ export const verifyAccount = async (req, res) => {
 // LOGIN
 export const login = async (req, res) => {
   const { email, password } = req.body;
-  const user = await User.findOne({ email });
-  if (!user) return res.status(401).json({ message: 'Invalid credentials' });
 
-  // TODO: validate password securely
+  // 1️⃣ Find user and include password
+  const user = await User.findOne({ email }).select("+password");
+  if (!user) {
+    return res.status(401).json({ message: "Invalid credentials" });
+  }
+
+  // 2️⃣ Check if password matches
+  const isMatch = await user.matchPassword(password);
+  if (!isMatch) {
+    return res.status(401).json({ message: "Invalid credentials" });
+  }
+
+  // 3️⃣ Generate JWT
   const token = signToken(user._id);
-  res.json({ token });
-};
 
+  // 4️⃣ Send response
+  res.json({
+    success: true,
+    token,
+    user: {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    },
+  });
+};
 // LOGOUT
 export const logout = async (req, res) => {
   const redis = getRedisClient();  // FIX

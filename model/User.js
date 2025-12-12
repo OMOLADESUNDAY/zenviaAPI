@@ -45,15 +45,24 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    oauthId: { type: String }, 
+
+    // Newly added
+    passwordChangedAt: Date,
+    isLocked: { type: Boolean, default: false },
+
+    // OAuth login support
+    oauthId: { type: String },
     provider: { type: String },
+
     resetPasswordToken: String,
     resetPasswordExpires: Date,
   },
   { timestamps: true }
 );
 
-// Hash password before save
+/* -----------------------------------------------------------
+   🔐 HASH PASSWORD BEFORE SAVE
+----------------------------------------------------------- */
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
 
@@ -62,12 +71,27 @@ userSchema.pre("save", async function (next) {
   next();
 });
 
-// 🔍 Check password match
+/* -----------------------------------------------------------
+   🔐 SET passwordChangedAt WHEN PASSWORD IS UPDATED
+----------------------------------------------------------- */
+userSchema.pre("save", function (next) {
+  if (!this.isModified("password") || this.isNew) return next();
+
+  // Ensure this timestamp is always before JWT is issued
+  this.passwordChangedAt = Date.now() - 1000;
+  next();
+});
+
+/* -----------------------------------------------------------
+   🔍 CHECK CORRECT PASSWORD
+----------------------------------------------------------- */
 userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
-// 🎟️ Generate password reset token
+/* -----------------------------------------------------------
+   🎟  GENERATE RESET PASSWORD TOKEN
+----------------------------------------------------------- */
 userSchema.methods.getResetPasswordToken = function () {
   const resetToken = crypto.randomBytes(20).toString("hex");
 
@@ -76,11 +100,24 @@ userSchema.methods.getResetPasswordToken = function () {
     .update(resetToken)
     .digest("hex");
 
-  this.resetPasswordExpires = Date.now() + 15 * 60 * 1000; // 15 minutes
+  this.resetPasswordExpires = Date.now() + 15 * 60 * 1000;
 
   return resetToken;
 };
 
-const User = mongoose.model("User", userSchema);
+/* -----------------------------------------------------------
+   🔐 CHECK IF PASSWORD CHANGED AFTER JWT WAS ISSUED
+----------------------------------------------------------- */
+userSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
+  if (!this.passwordChangedAt) return false;
 
-export default User;  
+  const changedTimestamp = parseInt(
+    this.passwordChangedAt.getTime() / 1000,
+    10
+  );
+
+  return changedTimestamp > JWTTimestamp;
+};
+
+const User = mongoose.model("User", userSchema);
+export default User;

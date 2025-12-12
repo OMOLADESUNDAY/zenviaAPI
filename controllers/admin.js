@@ -4,8 +4,8 @@ import Category from "../model/Category.js";
 import User from "../model/User.js";
 import Order from "../model/Order.js";
 import Payment from "../model/Payment.js";
-import Shipping from "../model/Shipping.js";
-import Coupon from "../model/Coupon.js";
+// import Shipping from "../model/Shipping.js";
+// import Coupon from "../model/Coupon.js";
 
 import APIFeatures from "../utils/apiFeatures.js";
 import { connectRedis } from "../config/redis.js";
