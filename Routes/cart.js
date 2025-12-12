@@ -6,29 +6,119 @@ import {
   removeFromCart,
   clearCart
 } from "../controllers/cart.js";
-import { protect } from "../auth/auth.js"; // middleware to protect routes
+import { protect } from "../auth/auth.js";
 
 const router = express.Router();
 
-// ---------------- USER CART ----------------
+/**
+ * @swagger
+ * tags:
+ *   name: Cart
+ *   description: User cart management
+ */
 
-// Get the current user's cart
+/**
+ * @swagger
+ * /api/cart:
+ *   get:
+ *     summary: Get current user's cart
+ *     tags: [Cart]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Cart retrieved successfully
+ */
 router.get("/", protect, getCart);
 
-// Add product to cart
+/**
+ * @swagger
+ * /api/cart:
+ *   post:
+ *     summary: Add products to cart
+ *     tags: [Cart]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               products:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     productId:
+ *                       type: string
+ *                     quantity:
+ *                       type: number
+ *     responses:
+ *       200:
+ *         description: Cart updated successfully
+ */
 router.post("/", protect, addToCart);
 
-// Update quantity of a product in cart
+/**
+ * @swagger
+ * /api/cart:
+ *   put:
+ *     summary: Update quantity of a product in cart
+ *     tags: [Cart]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [productId, quantity]
+ *             properties:
+ *               productId:
+ *                 type: string
+ *               quantity:
+ *                 type: number
+ *     responses:
+ *       200:
+ *         description: Cart product updated
+ */
 router.put("/", protect, updateCartProduct);
 
-// Remove a product from cart
+/**
+ * @swagger
+ * /api/cart/{productId}:
+ *   delete:
+ *     summary: Remove a product from cart
+ *     tags: [Cart]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: productId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Product removed from cart
+ */
 router.delete("/:productId", protect, removeFromCart);
 
-// Clear all products from cart
+/**
+ * @swagger
+ * /api/cart:
+ *   delete:
+ *     summary: Clear entire cart
+ *     tags: [Cart]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Cart cleared successfully
+ */
 router.delete("/", protect, clearCart);
-
-// ---------------- ADMIN CART ----------------
-// Get all carts (admin only)
- // you can protect this with adminProtect if needed
 
 export default router;

@@ -9,7 +9,7 @@ import slowDown from 'express-slow-down';
 import mongoSanitize from 'express-mongo-sanitize';
 import hpp from 'hpp';
 import session from 'express-session';
-import { body } from 'express-validator';
+// import { body } from 'express-validator';
 import AuthRouter from './Routes/auth.js';
 import OAuthRouter from './Routes/oauth.js';
 import { errorHandler } from "./utils/errorHandler.js";
@@ -20,6 +20,7 @@ import CartRoute from './Routes/cart.js'
 import CategoriesRoute from "./Routes/categories.js"
 import AdminRoute from "./Routes/admin.js"
 import PaymentRoute from "./Routes/payment.js"
+import { swaggerUi, swaggerSpec } from "./swagger.js";
 const app = express();
 
 // MIDDLEWARE
@@ -61,6 +62,7 @@ app.use('/api/admin',AdminRoute)
 app.use('/api/cart',CartRoute)
 app.use('/api/categories',CategoriesRoute)
 app.use('/api/payment',PaymentRoute)
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use('*', (req, res) => res.status(404).json({ message: "Route not found" }));
 app.use(errorHandler);
 
