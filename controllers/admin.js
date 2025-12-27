@@ -73,6 +73,35 @@ export const createProduct = async (req, res) => {
 };
 
 
+export const deleteAllProducts = async (req, res) => {
+  try {
+    // 1. Delete all products from DB
+    const result = await Product.deleteMany({});
+
+    // 2. Clear products cache from Redis
+    const redis = await connectRedis();
+    const keys = await redis.keys("products:*");
+
+    if (keys.length > 0) {
+      await redis.del(keys);
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "All products deleted successfully",
+      deletedCount: result.deletedCount
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+
+
+
 export const updateProduct = async (req, res) => {
   const images = req.files?.map(file => file.path);
 

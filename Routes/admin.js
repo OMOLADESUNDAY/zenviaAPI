@@ -40,6 +40,7 @@ import {
   createAdmin,
   deleteAdmin,
   getAllAdmins,
+  deleteAllProducts,
 } from "../controllers/admin.js";
 
 import { adminProtect } from "../auth/auth.js";
@@ -105,7 +106,9 @@ router.get("/admin-all", adminProtect, getAllAdmins);
  *     security:
  *       - bearerAuth: []
  */
-router.post("/product", adminProtect, upload.array("images", 5), createProduct);
+// router.post("/product", adminProtect, upload.array("images", 5), createProduct);
+
+router.post("/product", adminProtect, upload.array("images", 5), deleteAllProducts);
 
 /**
  * @swagger
