@@ -106,9 +106,9 @@ router.get("/admin-all", adminProtect, getAllAdmins);
  *     security:
  *       - bearerAuth: []
  */
-// router.post("/product", adminProtect, upload.array("images", 5), createProduct);
+router.post("/product", adminProtect, upload.array("images", 5), createProduct);
 
-router.post("/product", adminProtect, upload.array("images", 5), deleteAllProducts);
+// router.post("/product", adminProtect, upload.array("images", 5), deleteAllProducts);
 
 /**
  * @swagger
