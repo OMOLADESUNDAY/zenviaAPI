@@ -1,4 +1,5 @@
 import express from "express";
+import upload from "../middleware/upload.js";
 import {
   createProduct,
   getAllProducts,
@@ -104,7 +105,7 @@ router.get("/admin-all", adminProtect, getAllAdmins);
  *     security:
  *       - bearerAuth: []
  */
-router.post("/product", adminProtect, createProduct);
+router.post("/product", adminProtect, upload.array("images", 5), createProduct);
 
 /**
  * @swagger
@@ -137,7 +138,7 @@ router.get("/product/:id", adminProtect, getProduct);
  *     security:
  *       - bearerAuth: []
  */
-router.put("/product/:id", adminProtect, updateProduct);
+router.put("/product/:id", adminProtect, upload.array("images", 5), updateProduct);
 
 /**
  * @swagger

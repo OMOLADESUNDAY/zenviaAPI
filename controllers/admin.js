@@ -58,15 +58,38 @@ export const getProduct = async (req, res) => {
 };
 
 export const createProduct = async (req, res) => {
-  const product = await Product.create(req.body);
+  // req.files comes from multer
+  const images = req.files?.map(file => file.path) || [];
+
+  const product = await Product.create({
+    ...req.body,
+    images,
+  });
+
   const redis = await connectRedis();
   await redis.keys("products:*").then(keys => keys.forEach(k => redis.del(k)));
 
   res.status(201).json({ success: true, data: product });
 };
 
+
 export const updateProduct = async (req, res) => {
-  const product = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true });
+  const images = req.files?.map(file => file.path);
+
+  const updateData = {
+    ...req.body,
+  };
+
+  if (images && images.length > 0) {
+    updateData.images = images;
+  }
+
+  const product = await Product.findByIdAndUpdate(
+    req.params.id,
+    updateData,
+    { new: true }
+  );
+
   if (!product) throw new ApiError("Product not found", 404);
 
   const redis = await connectRedis();
@@ -75,6 +98,7 @@ export const updateProduct = async (req, res) => {
 
   res.json({ success: true, data: product });
 };
+
 
 export const deleteProduct = async (req, res) => {
   const product = await Product.findByIdAndDelete(req.params.id);
