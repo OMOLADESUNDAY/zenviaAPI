@@ -60,7 +60,7 @@ export const getProduct = async (req, res) => {
 export const createProduct = async (req, res) => {
   // req.files comes from multer
   const images = req.files?.map(file => file.path) || [];
-
+  console.log(req.body)
   const product = await Product.create({
     ...req.body,
     images,
