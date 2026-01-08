@@ -1,4 +1,5 @@
 import Payment from "../model/Payment.js";
+import Order from "../model/Order.js";
 import { ApiError } from "../utils/errorHandler.js";
 import Stripe from "stripe";
 
@@ -6,15 +7,26 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 // ================= CREATE PAYMENT (USER) =================
 export const createPayment = async (req, res) => {
-   console.log("user id"+req)
-  const { orderId, amount } = req.body;
+  const { orderId } = req.body;
 
-  if (!orderId || !amount) {
-    throw new ApiError("All fields are required", 400);
+  if (!orderId) {
+    throw new ApiError("Order ID is required", 400);
   }
 
-  // TODO: Validate order amount from DB to prevent tampering
- 
+  // ✅ Load the order from DB to verify amount
+  const order = await Order.findById(orderId);
+
+  if (!order) {
+    throw new ApiError("Order not found", 404);
+  }
+
+  if (order.isPaid) {
+    throw new ApiError("Order is already paid", 400);
+  }
+
+  const amount = order.totalPrice;
+
+  // Create Stripe PaymentIntent with DB-verified amount
   const paymentIntent = await stripe.paymentIntents.create({
     amount: Math.round(amount * 100), // amount in cents
     currency: "usd",
@@ -22,6 +34,7 @@ export const createPayment = async (req, res) => {
     metadata: { orderId, userId: req.user._id.toString() },
   });
 
+  // Create Payment record in DB
   const payment = await Payment.create({
     user: req.user._id,
     order: orderId,
@@ -63,14 +76,32 @@ export const stripeWebhook = async (req, res) => {
       if (payment) {
         payment.status = "completed";
         await payment.save();
+
+        // Update the associated Order
+        const order = await Order.findById(payment.order);
+        if (order) {
+          order.isPaid = true;
+          order.status = "paid";
+          order.paidAt = new Date();
+          order.stripePaymentIntentId = data.id;
+          await order.save();
+        }
       }
       break;
 
     case "payment_intent.payment_failed":
+      // Payment failed
       const failedPayment = await Payment.findOne({ transactionId: data.id });
       if (failedPayment) {
         failedPayment.status = "failed";
         await failedPayment.save();
+
+        // Update the associated Order
+        const order = await Order.findById(failedPayment.order);
+        if (order) {
+          order.status = "payment_failed";
+          await order.save();
+        }
       }
       break;
 
@@ -80,4 +111,3 @@ export const stripeWebhook = async (req, res) => {
 
   res.json({ received: true });
 };
-

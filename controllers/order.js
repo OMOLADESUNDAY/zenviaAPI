@@ -17,7 +17,7 @@ export const makeOrder = async (req, res) => {
     products,
     shippingAddress,
     paymentMethod,
-    itemsPrice,
+    itemsPrice, 
     taxPrice,
     shippingPrice,  
     totalPrice,
