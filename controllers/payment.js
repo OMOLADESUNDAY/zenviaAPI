@@ -7,7 +7,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 // ================= CREATE PAYMENT (USER) =================
 export const createPayment = async (req, res) => {
-  const { orderId } = req.body;
+  const { orderId } = req.body;  
 
   if (!orderId) {
     throw new ApiError("Order ID is required", 400);
@@ -40,7 +40,7 @@ export const createPayment = async (req, res) => {
     order: orderId,
     amount,
     paymentMethod: "card",
-    transactionId: paymentIntent.id,
+    stripePaymentIntentId: paymentIntent.id,
     status: "pending",
   });
 
