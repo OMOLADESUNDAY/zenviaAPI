@@ -63,6 +63,6 @@ router.post("/create", protect, createPayment);
  *       200:
  *         description: Webhook received
  */
-router.post("/webhook", protect, stripeWebhook);
+router.post("/webhook", stripeWebhook);
 
 export default router;
