@@ -72,7 +72,7 @@ export const stripeWebhook = async (req, res) => {
   switch (event.type) {
     case "payment_intent.succeeded":
       // Payment succeeded
-      const payment = await Payment.findOne({ transactionId: data.id });
+      const payment = await Payment.findOne({ stripePaymentIntentId: data.id });
       if (payment) {
         payment.status = "completed";
         await payment.save();
@@ -91,7 +91,7 @@ export const stripeWebhook = async (req, res) => {
 
     case "payment_intent.payment_failed":
       // Payment failed
-      const failedPayment = await Payment.findOne({ transactionId: data.id });
+      const failedPayment = await Payment.findOne({ stripePaymentIntentId: data.id });
       if (failedPayment) {
         failedPayment.status = "failed";
         await failedPayment.save();
