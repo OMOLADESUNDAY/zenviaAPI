@@ -90,7 +90,7 @@ import AdminRoute from './Routes/admin.js';
 import PaymentRoute from './Routes/payment.js';
 import { errorHandler } from "./utils/errorHandler.js";
 import { swaggerUi, swaggerSpec } from "./swagger.js";
-
+import { stripeWebhook } from './controllers/payment.js';
 const app = express();
 
 // ====== GLOBAL MIDDLEWARE ======
@@ -119,7 +119,7 @@ app.get('/health', (req, res) => res.json({ status: 'ok', timestamp: Date.now() 
 
 // ===== STRIPE WEBHOOK FIRST =====
 // Must come before express.json()
-import { stripeWebhook } from './controllers/payment.js';
+
 app.post(
   '/api/payment/webhook',
   express.raw({ type: 'application/json' }),
