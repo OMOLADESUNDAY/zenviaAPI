@@ -61,3 +61,17 @@ export const cancelOrder = async (req, res) => {
   await order.save();
   res.status(200).json({ success: true, data: order });
 };
+
+
+export const getLastShipping = async (req, res) => {
+  const lastOrder = await Order.findOne({ user: req.user._id })
+    .sort({ createdAt: -1 }) // latest order
+    .select("shippingAddress")
+    .lean();
+
+  if (!lastOrder) {
+    return res.json({ shippingAddress: null });
+  }
+
+  res.json({ shippingAddress: lastOrder.shippingAddress });
+};

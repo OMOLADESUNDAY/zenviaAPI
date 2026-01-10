@@ -128,4 +128,26 @@ router.get('/orders/:id', protect, getSingleOrder);
  */
 router.patch('/orders/:id/cancel', protect, cancelOrder);
 
+
+/**
+ * @swagger
+ * /api/order/last-shipping:
+ *   get:
+ *     summary: get shippinginfo
+ *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: shipping info 
+ */
+
+router.get("/last-shipping", protect, getLastShipping);
+
 export default router;
