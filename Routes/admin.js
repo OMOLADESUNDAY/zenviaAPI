@@ -82,7 +82,7 @@ router.post("/admin-account/create", createAdmin);
  *     security:
  *       - bearerAuth: []
  */
-router.delete("/admin-account/delete", adminProtect, deleteAdmin);
+router.delete("/admin-account/delete/:id", adminProtect, deleteAdmin);
 
 /**
  * @swagger
