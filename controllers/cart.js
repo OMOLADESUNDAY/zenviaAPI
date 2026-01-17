@@ -11,9 +11,21 @@ export const getCart = async (req, res) => {
 };
 
 export const getAllCart = async (req, res) => {
-  const carts = await Cart.find().populate("user").populate("products.product");
-  res.json({ success: true, data: carts });
+ 
+    const carts = await Cart.find()
+      .populate("user", "name email") // only what admin needs
+      .populate(
+        "products.product",
+        "name price images stock"
+      );
+
+    res.status(200).json({
+      success: true,
+      data: carts,
+    });
+ 
 };
+
 
 export const addToCart = async (req, res) => {
   const { products } = req.body;
